@@ -6,7 +6,7 @@
 <title>Domus - Inserir Produtos na NFe Simplificada</title>
 <meta name="description" content="Ferramenta para inserir dados de produtos na NFe simplificada das etiquetas ZPL do Mercado Livre">
 <meta name="theme-color" content="#1a1a2e">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ð·ï¸</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏷️</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -72,14 +72,14 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
     <div class="upload-row">
       <div class="upload-zone" id="zplZone" onclick="document.getElementById('zplInput').click()">
         <input type="file" id="zplInput" accept=".txt,.zpl">
-        <div class="icon">ð·ï¸</div>
+        <div class="icon">🏷️</div>
         <div class="label">Etiqueta de Envio</div>
         <div class="hint">Arquivo .txt ou .zpl com as etiquetas ZPL</div>
         <div class="filename" id="zplName"></div>
       </div>
       <div class="upload-zone" id="xlsxZone" onclick="document.getElementById('xlsxInput').click()">
         <input type="file" id="xlsxInput" accept=".xlsx,.xls">
-        <div class="icon">ð</div>
+        <div class="icon">📊</div>
         <div class="label">Planilha de Vendas</div>
         <div class="hint">Arquivo .xlsx exportado do Mercado Livre</div>
         <div class="filename" id="xlsxName"></div>
@@ -97,19 +97,19 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 
   <div class="card" id="resultCard">
     <h2><span class="step">3</span> Resultado</h2>
-    <div class="success-banner">â <span id="successMsg"></span></div>
+    <div class="success-banner">✅ <span id="successMsg"></span></div>
     <table class="results-table" id="resultsTable">
       <thead><tr><th>NF</th><th>Destinatario</th><th>SKU</th><th>Qtd</th><th>Descricao</th></tr></thead>
       <tbody id="resultsBody"></tbody>
     </table>
     <br>
     <button class="btn btn-download" id="downloadBtn" onclick="downloadResult()">
-      â¬ Baixar Arquivo para Impressao
+      ⬇ Baixar Arquivo para Impressao
     </button>
   </div>
 </div>
 
-<div class="footer">Domus Ecommerce â Ferramenta de Etiquetas + NFe</div>
+<div class="footer">Domus Ecommerce — Ferramenta de Etiquetas + NFe</div>
 
 <script>
 let zplContent = null;
@@ -139,7 +139,7 @@ function handleZplFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     zplContent = e.target.result;
-    document.getElementById('zplName').textContent = 'â ' + file.name;
+    document.getElementById('zplName').textContent = '✓ ' + file.name;
     document.getElementById('zplZone').classList.add('has-file');
     checkReady();
   };
@@ -154,7 +154,7 @@ function handleXlsxFile(file) {
       const wb = XLSX.read(e.target.result, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       xlsxData = XLSX.utils.sheet_to_json(ws, { header: 1, defwal: '' });
-      document.getElementById('xlsxName').textContent = 'â ' + file.name;
+      document.getElementById('xlsxName').textContent = '✓ ' + file.name;
       document.getElementById('xlsxZone').classList.add('has-file');
       checkReady();
     } catch (err) {
@@ -178,7 +178,7 @@ function log(msg, cls = '') {
 function findHeaderRow(data) {
   for (let i = 0; i < Math.min(20, data.length); i++) {
     const row = data[i];
-    if (row.some(cell => String(cell).includes('N.Âº de venda') || String(cell).includes('N.Â° de venda') || String(cell).toLowerCase().includes('n. de venda'))) {
+    if (row.some(cell => String(cell).includes('N.º de venda') || String(cell).includes('N.° de venda') || String(cell).toLowerCase().includes('n. de venda'))) {
       return i;
     }
   }
@@ -254,10 +254,10 @@ function processFiles() {
   const header = xlsxData[headerIdx];
   log(`Cabecalho encontrado na linha ${headerIdx + 1}`, 'info');
 
-  const colOrder = findColumnIndex(header, 'N.Âº de venda', 'N.Â° de venda', 'N. de venda', 'numero de venda');
+  const colOrder = findColumnIndex(header, 'N.º de venda', 'N.° de venda', 'N. de venda', 'numero de venda');
   const colSku = findColumnIndex(header, 'SKU');
   const colQty = findColumnIndex(header, 'Unidades');
-  const colDesc = findColumnIndex(header, 'TÃ­tulo do anÃºncio', 'Titulo do anuncio');
+  const colDesc = findColumnIndex(header, 'Título do anúncio', 'Titulo do anuncio');
 
   if (colOrder < 0 || colSku < 0) {
     log('ERRO: Colunas obrigatorias nao encontradas (N. de venda, SKU).', 'err');
@@ -402,7 +402,7 @@ function processFiles() {
 
     const insertBlock = zplLines.join('\n');
     matchCount++;
-    log(`<span class="ok">â NF ${nfNum} â ${prods.length} produto(s) inserido(s)</span>`);
+    log(`<span class="ok">✓ NF ${nfNum} → ${prods.length} produto(s) inserido(s)</span>`);
 
     // Try to insert before the horizontal rule around Y=1000 (flexible match)
     const rulePattern = /\^FO0,\d{3,4}\^GB800,\d,\d\^FS/;
@@ -447,7 +447,7 @@ function processFiles() {
 
   // Show results
   document.getElementById('resultCard').style.display = 'block';
-  document.getElementById('successMsg').textContent = `${matchCount} nota(s) fiscal(is) atualizada(s) com dados dos produtos â ${outputCounts.xaCount} etiquetas no arquivo`;
+  document.getElementById('successMsg').textContent = `${matchCount} nota(s) fiscal(is) atualizada(s) com dados dos produtos — ${outputCounts.xaCount} etiquetas no arquivo`;
 
   const tbody = document.getElementById('resultsBody');
   tbody.innerHTML = '';
