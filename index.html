@@ -6,7 +6,7 @@
 <title>Domus - Inserir Produtos na NFe Simplificada</title>
 <meta name="description" content="Ferramenta para inserir dados de produtos na NFe simplificada das etiquetas ZPL do Mercado Livre">
 <meta name="theme-color" content="#1a1a2e">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏷️</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ð·ï¸</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -34,6 +34,7 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 .upload-zone .label { font-size: 14px; font-weight: 600; color: #344054; }
 .upload-zone .hint { font-size: 12px; color: #98a2b3; margin-top: 4px; }
 .upload-zone .filename { font-size: 13px; color: #22c55e; font-weight: 600; margin-top: 8px; word-break: break-all; }
+
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 28px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-primary { background: #1a1a2e; color: white; width: 100%; }
@@ -71,14 +72,14 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
     <div class="upload-row">
       <div class="upload-zone" id="zplZone" onclick="document.getElementById('zplInput').click()">
         <input type="file" id="zplInput" accept=".txt,.zpl">
-        <div class="icon">🏷️</div>
+        <div class="icon">ð·ï¸</div>
         <div class="label">Etiqueta de Envio</div>
         <div class="hint">Arquivo .txt ou .zpl com as etiquetas ZPL</div>
         <div class="filename" id="zplName"></div>
       </div>
       <div class="upload-zone" id="xlsxZone" onclick="document.getElementById('xlsxInput').click()">
         <input type="file" id="xlsxInput" accept=".xlsx,.xls">
-        <div class="icon">📊</div>
+        <div class="icon">ð</div>
         <div class="label">Planilha de Vendas</div>
         <div class="hint">Arquivo .xlsx exportado do Mercado Livre</div>
         <div class="filename" id="xlsxName"></div>
@@ -96,19 +97,20 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 
   <div class="card" id="resultCard">
     <h2><span class="step">3</span> Resultado</h2>
-    <div class="success-banner">✅ <span id="successMsg"></span></div>
+    <div class="success-banner">â <span id="successMsg"></span></div>
     <table class="results-table" id="resultsTable">
       <thead><tr><th>NF</th><th>Destinatario</th><th>SKU</th><th>Qtd</th><th>Descricao</th></tr></thead>
       <tbody id="resultsBody"></tbody>
     </table>
     <br>
     <button class="btn btn-download" id="downloadBtn" onclick="downloadResult()">
-      ⬇ Baixar Arquivo para Impressao
+      â¬ Baixar Arquivo para Impressao
     </button>
   </div>
 </div>
 
-<div class="footer">Domus Ecommerce — Ferramenta de Etiquetas + NFe</div>
+<div class="footer">Domus Ecommerce â Ferramenta de Etiquetas + NFe</div>
+
 <script>
 let zplContent = null;
 let xlsxData = null;
@@ -137,7 +139,7 @@ function handleZplFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     zplContent = e.target.result;
-    document.getElementById('zplName').textContent = '✓ ' + file.name;
+    document.getElementById('zplName').textContent = 'â ' + file.name;
     document.getElementById('zplZone').classList.add('has-file');
     checkReady();
   };
@@ -151,8 +153,8 @@ function handleXlsxFile(file) {
     try {
       const wb = XLSX.read(e.target.result, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      xlsxData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-      document.getElementById('xlsxName').textContent = '✓ ' + file.name;
+      xlsxData = XLSX.utils.sheet_to_json(ws, { header: 1, defwal: '' });
+      document.getElementById('xlsxName').textContent = 'â ' + file.name;
       document.getElementById('xlsxZone').classList.add('has-file');
       checkReady();
     } catch (err) {
@@ -176,10 +178,11 @@ function log(msg, cls = '') {
 function findHeaderRow(data) {
   for (let i = 0; i < Math.min(20, data.length); i++) {
     const row = data[i];
-    if (row.some(cell => String(cell).includes('N.º de venda') || String(cell).includes('N.° de venda') || String(cell).toLowerCase().includes('n. de venda'))) {
+    if (row.some(cell => String(cell).includes('N.Âº de venda') || String(cell).includes('N.Â° de venda') || String(cell).toLowerCase().includes('n. de venda'))) {
       return i;
     }
   }
+  // Fallback: look for row with "SKU" column
   for (let i = 0; i < Math.min(20, data.length); i++) {
     if (data[i].some(cell => String(cell).toUpperCase() === 'SKU')) return i;
   }
@@ -215,12 +218,33 @@ function truncate(str, max = 50) {
   if (!str) return '';
   return str.length <= max ? str : str.substring(0, max - 3) + '...';
 }
+
+function countXaPairs(text) {
+  const xaCount = (text.match(/\^XA/g) || []).length;
+  const xzCount = (text.match(/\^XZ/g) || []).length;
+  return { xaCount, xzCount };
+}
+
+function extractNfFromNfe(label) {
+  // Strategy 1: N_c3_bamero with comma-separated digits (e.g. 123,456 or 1,234,567)
+  let m = label.match(/N_c3_bamero\s+([\d,.]+)\/Serie/);
+  if (m) return m[1].replace(/[,.]/g, '');
+  // Strategy 2: Numero plain digits
+  m = label.match(/N_c3_bamero\s+(\d+)\/Serie/);
+  if (m) return m[1];
+  // Strategy 3: broader fallback
+  m = label.match(/N_c3_bamero\s+([^\\/]+)\/Serie/);
+  if (m) return m[1].replace(/\D/g, '');
+  return null;
+}
+
 function processFiles() {
   const logEl = document.getElementById('log');
   logEl.innerHTML = '';
   logEl.style.display = 'block';
   document.getElementById('resultCard').style.display = 'none';
 
+  // 1. Parse Excel
   log('Lendo planilha de vendas...', 'info');
   const headerIdx = findHeaderRow(xlsxData);
   if (headerIdx < 0) {
@@ -228,20 +252,21 @@ function processFiles() {
     return;
   }
   const header = xlsxData[headerIdx];
-  log('Cabecalho encontrado na linha ' + (headerIdx + 1), 'info');
+  log(`Cabecalho encontrado na linha ${headerIdx + 1}`, 'info');
 
-  const colOrder = findColumnIndex(header, 'N.º de venda', 'N.° de venda', 'N. de venda', 'numero de venda');
+  const colOrder = findColumnIndex(header, 'N.Âº de venda', 'N.Â° de venda', 'N. de venda', 'numero de venda');
   const colSku = findColumnIndex(header, 'SKU');
   const colQty = findColumnIndex(header, 'Unidades');
-  const colDesc = findColumnIndex(header, 'Título do anúncio', 'Titulo do anuncio');
+  const colDesc = findColumnIndex(header, 'TÃ­tulo do anÃºncio', 'Titulo do anuncio');
 
   if (colOrder < 0 || colSku < 0) {
     log('ERRO: Colunas obrigatorias nao encontradas (N. de venda, SKU).', 'err');
-    log('Colunas detectadas: Venda=' + colOrder + ', SKU=' + colSku + ', Qtd=' + colQty + ', Desc=' + colDesc, 'err');
+    log(`Colunas detectadas: Venda=${colOrder}, SKU=${colSku}, Qtd=${colQty}, Desc=${colDesc}`, 'err');
     return;
   }
-  log('Colunas: Venda=' + colOrder + ', SKU=' + colSku + ', Qtd=' + colQty + ', Desc=' + colDesc, 'info');
+  log(`Colunas: Venda=${colOrder}, SKU=${colSku}, Qtd=${colQty}, Desc=${colDesc}`, 'info');
 
+  // Build product map: orderId -> [{sku, qty, desc}]
   const products = {};
   let totalProducts = 0;
   for (let i = headerIdx + 1; i < xlsxData.length; i++) {
@@ -256,34 +281,50 @@ function processFiles() {
     products[orderId].push({ sku, qty, desc });
     totalProducts++;
   }
-  log('<span class="ok">' + Object.keys(products).length + ' pedidos com ' + totalProducts + ' produtos carregados</span>');
+  log(`<span class="ok">${Object.keys(products).length} pedidos com ${totalProducts} produtos carregados</span>`);
 
+  // 2. Count input labels for validation
+  const inputCounts = countXaPairs(zplContent);
+  log(`Entrada: ${inputCounts.xaCount} ^XA / ${inputCounts.xzCount} ^XZ`, 'info');
+
+  // 3. Parse ZPL into label blocks (robust: use regex to find ^XA...^XZ pairs)
   log('Analisando etiquetas ZPL...', 'info');
-  const blocks = zplContent.split(/(\^XZ)/);
   const labels = [];
-  let current = '';
-  for (const block of blocks) {
-    current += block;
-    if (block.trim() === '^XZ') {
-      labels.push(current);
-      current = '';
-    }
+  const labelRegex = /\^XA[\s\S]*?\^XZ/g;
+  let match;
+  while ((match = labelRegex.exec(zplContent)) !== null) {
+    labels.push(match[0]);
   }
-  if (current.trim()) labels.push(current);
-  log(labels.length + ' blocos ZPL encontrados', 'info');
+  log(`${labels.length} blocos ZPL encontrados`, 'info');
 
+  if (labels.length !== inputCounts.xaCount) {
+    log(`AVISO: Esperados ${inputCounts.xaCount} blocos, encontrados ${labels.length}`, 'warn');
+  }
+
+  // 4. Map NF -> orderId using etiqueta labels
   const nfToOrder = {};
   const nfToRecipient = {};
 
   for (const label of labels) {
     if (!label.includes('NF:')) continue;
+
     const nfMatch = label.match(/NF:\s*(\d+)/);
     if (!nfMatch) continue;
     const nf = nfMatch[1];
-    const idMatch = label.match(/(?:Pack ID|Venda):\s*(\d+)\^FS\s*\^FO\d+,\d+\^A0N,\d+,\d+\^FD(\d+)/);
+
+    // Extract pack/venda ID - try multiple patterns
+    let idMatch = label.match(/(?:Pack ID|Venda):\s*(\d+)\^FS\s*\^FO\d+,\d+\^A0N,\d+,\d+\^FD(\d+)/);
     if (idMatch) {
       nfToOrder[nf] = idMatch[1] + idMatch[2];
+    } else {
+      // Fallback: try with flexible spacing/newlines
+      idMatch = label.match(/(?:Pack ID|Venda):\s*(\d+)\^FS[\s\S]*?\^FD(\d{10,})\^FS/);
+      if (idMatch) {
+        nfToOrder[nf] = idMatch[1] + idMatch[2];
+      }
     }
+
+    // Extract recipient name
     const recipMatch = label.match(/RECEIVER ZONE[\s\S]*?\^FD([^\^]+)\^FS/);
     if (recipMatch) {
       const fullName = recipMatch[1].replace(/_[0-9A-Fa-f]{2}/g, '').trim();
@@ -292,77 +333,130 @@ function processFiles() {
     }
   }
 
-  log(Object.keys(nfToOrder).length + ' notas fiscais mapeadas a pedidos', 'info');
+  log(`${Object.keys(nfToOrder).length} notas fiscais mapeadas a pedidos`, 'info');
 
+  // 5. Insert product data into NFe labels
   const matchResults = [];
   let matchCount = 0;
   let noMatchCount = 0;
+  let insertFailCount = 0;
 
   const outputLabels = labels.map(label => {
     if (!label.includes('DANFE SIMPLIFICADO')) return label;
-    const nfMatch = label.match(/N_c3_bamero\s+(\d+),(\d+)\/Serie/);
-    if (!nfMatch) {
-      const nfMatch2 = label.match(/N_c3_bamero\s+(\d[\d,.]+)\/Serie/);
-      if (!nfMatch2) return label;
-    }
-    const nfNum = nfMatch ? nfMatch[1] + nfMatch[2] : null;
-    if (!nfNum || !nfToOrder[nfNum]) {
-      if (nfNum) { log('NF ' + nfNum + ': Pedido nao encontrado no mapeamento', 'warn'); noMatchCount++; }
-      return label;
-    }
-    const orderId = nfToOrder[nfNum];
-    if (!products[orderId]) {
-      log('NF ' + nfNum + ' -> Pedido ' + orderId + ': Sem produtos na planilha', 'warn');
+
+    // Find NF number in NFe label (robust extraction)
+    const nfNum = extractNfFromNfe(label);
+    if (!nfNum) {
+      log('NFe encontrada mas NF nao identificado no bloco', 'warn');
       noMatchCount++;
       return label;
     }
+
+    if (!nfToOrder[nfNum]) {
+      log(`NF ${nfNum}: Pedido nao encontrado no mapeamento`, 'warn');
+      noMatchCount++;
+      return label;
+    }
+
+    const orderId = nfToOrder[nfNum];
+    if (!products[orderId]) {
+      log(`NF ${nfNum} -> Pedido ${orderId}: Sem produtos na planilha`, 'warn');
+      noMatchCount++;
+      return label;
+    }
+
+    // Generate product ZPL lines
     const prods = products[orderId];
     let y = 620;
     let zplLines = [];
-    zplLines.push('^FO40,' + y + '^A0N,18,18^FH^FDPRODUTOS DO PEDIDO^FS');
-    zplLines.push('^FO40,' + (y - 1) + '^A0N,18,18^FH^FDPRODUTOS DO PEDIDO^FS');
+
+    // Section title (bold via double print)
+    zplLines.push(`^FO40,${y}^A0N,18,18^FH^FDPRODUTOS DO PEDIDO^FS`);
+    zplLines.push(`^FO40,${y - 1}^A0N,18,18^FH^FDPRODUTOS DO PEDIDO^FS`);
     y += 28;
-    zplLines.push('^FO40,' + y + '^A0N,16,16^FDSKU^FS');
-    zplLines.push('^FO280,' + y + '^A0N,16,16^FDQtd^FS');
-    zplLines.push('^FO320,' + y + '^A0N,16,16^FH^FDDescri_C3_A7_C3_A3o^FS');
+
+    // Column headers
+    zplLines.push(`^FO40,${y}^A0N,16,16^FDSKU^FS`);
+    zplLines.push(`^FO280,${y}^A0N,16,16^FDQtd^FS`);
+    zplLines.push(`^FO320,${y}^A0N,16,16^FH^FDDescri_C3_A7_C3_A3o^FS`);
     y += 5;
-    zplLines.push('^FO40,' + (y + 15) + '^GB720,0,1^FS');
+    zplLines.push(`^FO40,${y + 15}^GB720,0,1^FS`);
     y += 25;
+
+    // Product rows
     for (const p of prods) {
       const descEncoded = encodeZplHex(truncate(p.desc, 50));
-      zplLines.push('^FO40,' + y + '^A0N,16,16^FH^FD' + p.sku + '^FS');
-      zplLines.push('^FO285,' + y + '^A0N,16,16^FD' + p.qty + '^FS');
-      zplLines.push('^FO320,' + y + '^A0N,16,16^FH^FB440,2,0,L^FD' + descEncoded + '^FS');
+      zplLines.push(`^FO40,${y}^A0N,16,16^FH^FD${p.sku}^FS`);
+      zplLines.push(`^FO285,${y}^A0N,16,16^FD${p.qty}^FS`);
+      zplLines.push(`^FO320,${y}^A0N,16,16^FH^FB440,2,0,L^FD${descEncoded}^FS`);
       y += 40;
-      matchResults.push({ nf: nfNum, recipient: nfToRecipient[nfNum] || '-', sku: p.sku, qty: p.qty, desc: truncate(p.desc, 55) });
+
+      matchResults.push({
+        nf: nfNum,
+        recipient: nfToRecipient[nfNum] || '-',
+        sku: p.sku,
+        qty: p.qty,
+        desc: truncate(p.desc, 55)
+      });
     }
+
     const insertBlock = zplLines.join('\n');
     matchCount++;
-    log('<span class="ok">✓ NF ' + nfNum + ' → ' + prods.length + ' produto(s) inserido(s)</span>');
-    return label.replace('^FO0,1000^GB800,1,3^FS', insertBlock + '\n^FO0,1000^GB800,1,3^FS');
+    log(`<span class="ok">â NF ${nfNum} â ${prods.length} produto(s) inserido(s)</span>`);
+
+    // Try to insert before the horizontal rule around Y=1000 (flexible match)
+    const rulePattern = /\^FO0,\d{3,4}\^GB800,\d,\d\^FS/;
+    const ruleMatches = [...label.matchAll(new RegExp(rulePattern, 'g'))];
+    // Find the rule closest to Y=1000
+    let bestRule = null;
+    for (const rm of ruleMatches) {
+      const yVal = parseInt(rm[0].match(/\^FO0,(\d+)/)[1]);
+      if (yVal >= 900 && yVal <= 1100) { bestRule = rm[0]; break; }
+    }
+
+    if (bestRule) {
+      return label.replace(bestRule, insertBlock + '\n' + bestRule);
+    } else {
+      // Fallback: insert before ^XZ
+      insertFailCount++;
+      log(`NF ${nfNum}: Ponto de insercao padrao nao encontrado, usando fallback`, 'warn');
+      return label.replace(/\^XZ\s*$/, insertBlock + '\n^XZ');
+    }
   });
+
+  // 6. Validate output
+  resultContent = outputLabels.join('\n');
+  const outputCounts = countXaPairs(resultContent);
+
+  if (outputCounts.xaCount !== inputCounts.xaCount) {
+    log(`<span class="err">ALERTA: Entrada tinha ${inputCounts.xaCount} etiquetas, saida tem ${outputCounts.xaCount}! Verifique o arquivo.</span>`);
+  } else {
+    log(`<span class="ok">Validacao: ${outputCounts.xaCount} etiquetas na saida (igual a entrada)</span>`);
+  }
 
   if (matchCount === 0) {
     log('ERRO: Nenhuma NFe foi atualizada. Verifique se os arquivos correspondem.', 'err');
     return;
   }
 
-  resultContent = outputLabels.join('');
   const now = new Date();
-  const ts = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '_' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
-  resultFilename = 'Etiquetas_COM_PRODUTOS_' + ts + '.txt';
+  const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  resultFilename = `Etiquetas_COM_PRODUTOS_${ts}.txt`;
 
-  log('<br><span class="ok"><b>Concluido!</b> ' + matchCount + ' NFe(s) atualizadas' + (noMatchCount > 0 ? ', ' + noMatchCount + ' sem correspondencia' : '') + '</span>');
+  log(`<br><span class="ok"><b>Concluido!</b> ${matchCount} NFe(s) atualizadas` + (noMatchCount > 0 ? `, ${noMatchCount} sem correspondencia` : '') + (insertFailCount > 0 ? `, ${insertFailCount} com insercao alternativa` : '') + `</span>`);
 
+  // Show results
   document.getElementById('resultCard').style.display = 'block';
-  document.getElementById('successMsg').textContent = matchCount + ' nota(s) fiscal(is) atualizada(s) com dados dos produtos';
+  document.getElementById('successMsg').textContent = `${matchCount} nota(s) fiscal(is) atualizada(s) com dados dos produtos â ${outputCounts.xaCount} etiquetas no arquivo`;
+
   const tbody = document.getElementById('resultsBody');
   tbody.innerHTML = '';
   for (const r of matchResults) {
     const tr = document.createElement('tr');
-    tr.innerHTML = '<td>' + r.nf + '</td><td>' + r.recipient + '</td><td><b>' + r.sku + '</b></td><td>' + r.qty + '</td><td>' + r.desc + '</td>';
+    tr.innerHTML = `<td>${r.nf}</td><td>${r.recipient}</td><td><b>${r.sku}</b></td><td>${r.qty}</td><td>${r.desc}</td>`;
     tbody.appendChild(tr);
   }
+
   document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
 }
 
