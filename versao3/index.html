@@ -250,11 +250,20 @@ function findHeaderRow(data) {
   return -1;
 }
 
+function normalizeStr(s) {
+  // Remove acentos, caracteres especiais (\u00ba \u00b0), deixa s\u00f3 letras/n\u00fameros/espa\u00e7os
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/[\u00ba\u00b0]/g, 'o')  // ordinal e grau \u2192 o
+    .replace(/[^a-z0-9 ]/g, ' ') // resto \u2192 espa\u00e7o
+    .replace(/\s+/g, ' ').trim();
+}
+
 function findColumnIndex(headerRow, ...keywords) {
   for (let i = 0; i < headerRow.length; i++) {
-    const val = String(headerRow[i]).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const val = normalizeStr(headerRow[i]);
     for (const kw of keywords) {
-      if (val.includes(kw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))) return i;
+      if (val.includes(normalizeStr(kw))) return i;
     }
   }
   return -1;
@@ -306,14 +315,24 @@ function processFiles() {
   const header = xlsxData[headerIdx];
   log(`Cabecalho encontrado na linha ${headerIdx + 1}`, 'info');
 
-  const colOrder = findColumnIndex(header, 'N.Âº de venda', 'N.Â° de venda', 'N. de venda', 'numero de venda');
+  // Logar os cabeÃ§alhos detectados para debug
+  log(`CabeÃ§alhos encontrados: ${header.map((h,i) => `[${i}]=${String(h).substring(0,20)}`).join(', ')}`, 'info');
+
+  // Busca coluna de pedido com mÃºltiplas variaÃ§Ãµes (Mercado Livre muda o nome entre versÃµes)
+  const colOrder = findColumnIndex(header,
+    'N.Âº de venda', 'N.Â° de venda', 'N. de venda', 'Nro. de venda',
+    'numero de venda', 'n o de venda', 'nro de venda', 'num de venda',
+    'id do pedido', 'pedido', 'order id', 'n venda'
+  );
   const colSku   = findColumnIndex(header, 'SKU');
-  const colQty   = findColumnIndex(header, 'Unidades');
-  const colDesc  = findColumnIndex(header, 'TÃ­tulo do anÃºncio', 'Titulo do anuncio');
+  const colQty   = findColumnIndex(header, 'Unidades', 'Quantidade', 'Qtd');
+  // DescriÃ§Ã£o: APENAS colunas especÃ­ficas do tÃ­tulo do produto (evitar pegar colunas erradas)
+  const colDesc  = findColumnIndex(header, 'TÃ­tulo do anÃºncio', 'Titulo do anuncio', 'titulo do anuncio', 'titulo anuncio');
 
   if (colOrder < 0 || colSku < 0) {
     log('ERRO: Colunas obrigatorias nao encontradas (N. de venda, SKU).', 'err');
     log(`Colunas detectadas: Venda=${colOrder}, SKU=${colSku}, Qtd=${colQty}, Desc=${colDesc}`, 'err');
+    log('Dica: Verifique se o arquivo Excel exportado do Mercado Livre esta correto.', 'warn');
     return;
   }
   log(`Colunas: Venda=${colOrder}, SKU=${colSku}, Qtd=${colQty}, Desc=${colDesc}`, 'info');
@@ -528,7 +547,7 @@ function processFiles() {
     const ruleMatches = [...block.matchAll(new RegExp(rulePattern, 'g'))];
     let bestRule = null;
     for (const rm of ruleMatches) {
-      const yVal = parseInt(rm[0].match(/^^FO0,(\d+)/)[1]);
+      const yVal = parseInt(rm[0].match(/\^FO0,(\d+)/)[1]);
       if (yVal >= 900 && yVal <= 1100) { bestRule = rm[0]; break; }
     }
 
