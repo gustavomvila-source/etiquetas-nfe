@@ -6,7 +6,7 @@
 <title>Domus - Inserir Produtos na NFe Simplificada</title>
 <meta name="description" content="Ferramenta para inserir dados de produtos na NFe simplificada das etiquetas ZPL do Mercado Livre">
 <meta name="theme-color" content="#1a1a2e">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ð·ï¸</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏷️</text></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -73,14 +73,14 @@ body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background
 <div class="upload-row">
 <div class="upload-zone" id="zplZone" onclick="document.getElementById('zplInput').click()">
 <input type="file" id="zplInput" accept=".txt,.zpl">
-<div class="icon">ð·ï¸</div>
+<div class="icon">🏷️</div>
 <div class="label">Etiqueta de Envio</div>
 <div class="hint">Arquivo .txt ou .zpl com as etiquetas ZPL</div>
 <div class="filename" id="zplName"></div>
 </div>
 <div class="upload-zone" id="xlsxZone" onclick="document.getElementById('xlsxInput').click()">
 <input type="file" id="xlsxInput" accept=".xlsx,.xls">
-<div class="icon">ð</div>
+<div class="icon">📊</div>
 <div class="label">Planilha de Vendas</div>
 <div class="hint">Arquivo .xlsx exportado do Mercado Livre</div>
 <div class="filename" id="xlsxName"></div>
@@ -98,19 +98,19 @@ Cruzar Dados e Gerar Etiquetas
 
 <div class="card" id="resultCard">
 <h2><span class="step">3</span> Resultado</h2>
-<div class="success-banner">â <span id="successMsg"></span></div>
+<div class="success-banner">✅ <span id="successMsg"></span></div>
 <table class="results-table" id="resultsTable">
 <thead><tr><th>NF</th><th>Destinatario</th><th>SKU</th><th>Qtd</th><th>Descricao</th></tr></thead>
 <tbody id="resultsBody"></tbody>
 </table>
 <br>
 <button class="btn btn-download" id="downloadBtn" onclick="downloadResult()">
-â¬ Baixar Arquivo para Impressao
+⬇ Baixar Arquivo para Impressao
 </button>
 </div>
 </div>
 
-<div class="footer">Domus Ecommerce â Ferramenta de Etiquetas + NFe v3</div>
+<div class="footer">Domus Ecommerce — Ferramenta de Etiquetas + NFe v3</div>
 
 <script>
 let zplContent = null;
@@ -140,7 +140,7 @@ function handleZplFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     zplContent = e.target.result;
-    document.getElementById('zplName').textContent = 'â ' + file.name;
+    document.getElementById('zplName').textContent = '✓ ' + file.name;
     document.getElementById('zplZone').classList.add('has-file');
     checkReady();
   };
@@ -156,7 +156,7 @@ function handleXlsxFile(file) {
       const ws = wb.Sheets[wb.SheetNames[0]];
       // CORRECAO: 'defwal' era um typo, o correto e 'defval'
       xlsxData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-      document.getElementById('xlsxName').textContent = 'â ' + file.name;
+      document.getElementById('xlsxName').textContent = '✓ ' + file.name;
       document.getElementById('xlsxZone').classList.add('has-file');
       checkReady();
     } catch (err) {
@@ -180,11 +180,11 @@ function log(msg, cls = '') {
 function logSection(title) {
   const el = document.getElementById('log');
   el.style.display = 'block';
-  el.innerHTML += `<div class="section">â ${title} â</div>`;
+  el.innerHTML += `<div class="section">— ${title} —</div>`;
   el.scrollTop = el.scrollHeight;
 }
 
-// âââ Helpers de identificaÃ§Ã£o de bloco âââââââââââââââââââââââââââââââââââââââ
+// ─── Helpers de identificação de bloco ───────────────────────────────────────
 
 function isShippingLabel(block) {
   return block.includes('Pack ID:') || block.includes('Venda:');
@@ -194,9 +194,9 @@ function isDanfe(block) {
   return block.includes('DANFE SIMPLIFICADO');
 }
 
-// âââ ExtraÃ§Ã£o do ID do pedido (Pack ID ou Venda) âââââââââââââââââââââââââââââ
+// ─── Extração do ID do pedido (Pack ID ou Venda) ─────────────────────────────
 // Formato: ^FDPack ID: 20000^FS ... ^FD13584671263^FS
-// O prefixo (ex: 20000) e o sufixo (ex: 13584671263) sÃ£o concatenados.
+// O prefixo (ex: 20000) e o sufixo (ex: 13584671263) são concatenados.
 
 function extractOrderId(block) {
   const match = block.match(/\^FD(?:Pack ID|Venda):\s*(\d+)\^FS[\s\S]{0,300}?\^FD(\d{8,})\^FS/);
@@ -204,7 +204,7 @@ function extractOrderId(block) {
   return match[1] + match[2];
 }
 
-// âââ ExtraÃ§Ã£o da NF da etiqueta de envio (quando contem "NF:") âââââââââââââââ
+// ─── Extração da NF da etiqueta de envio (quando contem "NF:") ───────────────
 
 function extractNfFromShippingLabel(block) {
   const match = block.match(/NF:\s*([\d.,]+)/);
@@ -212,10 +212,10 @@ function extractNfFromShippingLabel(block) {
   return match[1].replace(/[^\d]/g, '');
 }
 
-// âââ ExtraÃ§Ã£o da NF do DANFE (bloco seguinte quando envio nao tem NF) ââââââââ
-// EstratÃ©gia 1 (preferencial): chave de acesso de 44 dÃ­gitos
-//   nf = chave.slice(25, 34) sem zeros Ã  esquerda
-// EstratÃ©gia 2 (fallback): texto "N_c3_bamero .../Serie"
+// ─── Extração da NF do DANFE (bloco seguinte quando envio nao tem NF) ────────
+// Estratégia 1 (preferencial): chave de acesso de 44 dígitos
+//   nf = chave.slice(25, 34) sem zeros à esquerda
+// Estratégia 2 (fallback): texto "N_c3_bamero .../Serie"
 
 function extractNfFromDanfe(block) {
   // Preferencial: chave de acesso de 44 digitos
@@ -227,7 +227,7 @@ function extractNfFromDanfe(block) {
   }
 
   // Fallback: texto da NF no DANFE
-  const textMatch = block.match(/N(?:_c3_ba|Ãº|u)mero\s+([\d.,]+)\/Serie\s*(\d+)/i);
+  const textMatch = block.match(/N(?:_c3_ba|ú|u)mero\s+([\d.,]+)\/Serie\s*(\d+)/i);
   if (textMatch) {
     return { nf: textMatch[1].replace(/[^\d]/g, ''), source: 'TEXTO_DANFE' };
   }
@@ -235,12 +235,12 @@ function extractNfFromDanfe(block) {
   return null;
 }
 
-// âââ Helpers gerais âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Helpers gerais ───────────────────────────────────────────────────────────
 
 function findHeaderRow(data) {
   for (let i = 0; i < Math.min(20, data.length); i++) {
     const row = data[i];
-    if (row.some(cell => String(cell).includes('N.Âº de venda') || String(cell).includes('N.Â° de venda') || String(cell).toLowerCase().includes('n. de venda'))) {
+    if (row.some(cell => String(cell).includes('N.º de venda') || String(cell).includes('N.° de venda') || String(cell).toLowerCase().includes('n. de venda'))) {
       return i;
     }
   }
@@ -295,7 +295,7 @@ function countXaPairs(text) {
   return { xaCount, xzCount };
 }
 
-// âââ PROCESSAMENTO PRINCIPAL ââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── PROCESSAMENTO PRINCIPAL ──────────────────────────────────────────────────
 
 function processFiles() {
   const logEl = document.getElementById('log');
@@ -303,7 +303,7 @@ function processFiles() {
   logEl.style.display = 'block';
   document.getElementById('resultCard').style.display = 'none';
 
-  // ââ 1. Ler planilha Excel ââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── 1. Ler planilha Excel ──────────────────────────────────────────────────
   logSection('LEITURA DO EXCEL');
   log('Lendo planilha de vendas...', 'info');
 
@@ -315,19 +315,19 @@ function processFiles() {
   const header = xlsxData[headerIdx];
   log(`Cabecalho encontrado na linha ${headerIdx + 1}`, 'info');
 
-  // Logar os cabeÃ§alhos detectados para debug
-  log(`CabeÃ§alhos encontrados: ${header.map((h,i) => `[${i}]=${String(h).substring(0,20)}`).join(', ')}`, 'info');
+  // Logar os cabeçalhos detectados para debug
+  log(`Cabeçalhos encontrados: ${header.map((h,i) => `[${i}]=${String(h).substring(0,20)}`).join(', ')}`, 'info');
 
-  // Busca coluna de pedido com mÃºltiplas variaÃ§Ãµes (Mercado Livre muda o nome entre versÃµes)
+  // Busca coluna de pedido com múltiplas variações (Mercado Livre muda o nome entre versões)
   const colOrder = findColumnIndex(header,
-    'N.Âº de venda', 'N.Â° de venda', 'N. de venda', 'Nro. de venda',
+    'N.º de venda', 'N.° de venda', 'N. de venda', 'Nro. de venda',
     'numero de venda', 'n o de venda', 'nro de venda', 'num de venda',
     'id do pedido', 'pedido', 'order id', 'n venda'
   );
   const colSku   = findColumnIndex(header, 'SKU');
   const colQty   = findColumnIndex(header, 'Unidades', 'Quantidade', 'Qtd');
-  // DescriÃ§Ã£o: APENAS colunas especÃ­ficas do tÃ­tulo do produto (evitar pegar colunas erradas)
-  const colDesc  = findColumnIndex(header, 'TÃ­tulo do anÃºncio', 'Titulo do anuncio', 'titulo do anuncio', 'titulo anuncio');
+  // Descrição: APENAS colunas específicas do título do produto (evitar pegar colunas erradas)
+  const colDesc  = findColumnIndex(header, 'Título do anúncio', 'Titulo do anuncio', 'titulo do anuncio', 'titulo anuncio');
 
   if (colOrder < 0 || colSku < 0) {
     log('ERRO: Colunas obrigatorias nao encontradas (N. de venda, SKU).', 'err');
@@ -354,7 +354,7 @@ function processFiles() {
   }
   log(`<span class="ok">${Object.keys(products).length} pedidos com ${totalProducts} produtos carregados do Excel</span>`);
 
-  // ââ 2. Separar blocos ZPL âââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── 2. Separar blocos ZPL ─────────────────────────────────────────────────
   logSection('ANALISE DO ZPL');
 
   const inputCounts = countXaPairs(zplContent);
@@ -378,8 +378,8 @@ function processFiles() {
     log(`AVISO: Esperados ${inputCounts.xaCount} blocos, encontrados ${blocks.length}`, 'warn');
   }
 
-  // ââ 3. MAPEAMENTO NF â Pedido (logica corrigida) ââââââââââââââââââââââââââ
-  logSection('MAPEAMENTO NF â PEDIDO');
+  // ── 3. MAPEAMENTO NF → Pedido (logica corrigida) ──────────────────────────
+  logSection('MAPEAMENTO NF → PEDIDO');
 
   const nfToOrder    = {};
   const nfToRecipient = {};
@@ -440,7 +440,7 @@ function processFiles() {
 
   log(`NFs extraidas da etiqueta de envio: ${nfFromShipping}`, 'info');
   log(`NFs extraidas por fallback do DANFE seguinte: ${nfFromDanfe}`, 'info');
-  log(`<span class="ok">Total mapeamentos NF â Pedido: ${Object.keys(nfToOrder).length}</span>`);
+  log(`<span class="ok">Total mapeamentos NF → Pedido: ${Object.keys(nfToOrder).length}</span>`);
 
   if (unmapped.length > 0) {
     log(`<span class="warn">Blocos sem mapeamento: ${unmapped.length}</span>`);
@@ -449,7 +449,7 @@ function processFiles() {
     }
   }
 
-  // ââ 4. Inserir produtos nas DANFEs ââââââââââââââââââââââââââââââââââââââââ
+  // ── 4. Inserir produtos nas DANFEs ────────────────────────────────────────
   logSection('INSERCAO DE PRODUTOS');
 
   const matchResults = [];
@@ -478,7 +478,7 @@ function processFiles() {
 
     const orderId = nfToOrder[nfNum];
     if (!products[orderId]) {
-      log(`NF ${nfNum} â Pedido ${orderId}: Sem produtos na planilha`, 'warn');
+      log(`NF ${nfNum} → Pedido ${orderId}: Sem produtos na planilha`, 'warn');
       noMatchCount++;
       return block;
     }
@@ -488,7 +488,7 @@ function processFiles() {
       block = removeExistingProductSection(block);
     }
 
-    // ââ LAYOUT OPCAO A: Empilhado com caixa de quantidade ââââââââââââââââââ
+    // ── LAYOUT OPCAO A: Empilhado com caixa de quantidade ──────────────────
     const prods = products[orderId];
     const nProds = prods.length;
 
@@ -506,7 +506,7 @@ function processFiles() {
     zplLines.push(`^FO40,${y - 1}^A0N,20,20^FH^FDPRODUTOS DO PEDIDO^FS`);
     y += 30;
 
-    // Linhas de produto â layout empilhado
+    // Linhas de produto — layout empilhado
     for (const p of prods) {
       const descEncoded = encodeZplHex(p.desc);
 
@@ -540,7 +540,7 @@ function processFiles() {
 
     const insertBlock = zplLines.join('\n');
     matchCount++;
-    log(`<span class="ok">â NF ${nfNum} â ${prods.length} produto(s) inserido(s)</span>`);
+    log(`<span class="ok">✓ NF ${nfNum} → ${prods.length} produto(s) inserido(s)</span>`);
 
     // Inserir antes da linha horizontal proxima de Y=1000
     const rulePattern = /\^FO0,\d{3,4}\^GB800,\d,\d\^FS/;
@@ -560,7 +560,7 @@ function processFiles() {
     }
   });
 
-  // ââ 5. Validacao da saida âââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── 5. Validacao da saida ─────────────────────────────────────────────────
   logSection('VALIDACAO');
 
   resultContent = outputBlocks.join('\n');
@@ -569,7 +569,7 @@ function processFiles() {
   if (outputCounts.xaCount !== inputCounts.xaCount) {
     log(`<span class="err">ALERTA: Entrada tinha ${inputCounts.xaCount} etiquetas, saida tem ${outputCounts.xaCount}! Verifique o arquivo.</span>`);
   } else {
-    log(`<span class="ok">Blocos preservados: ${outputCounts.xaCount} (igual a entrada) â</span>`);
+    log(`<span class="ok">Blocos preservados: ${outputCounts.xaCount} (igual a entrada) ✓</span>`);
   }
 
   if (matchCount === 0) {
@@ -577,7 +577,7 @@ function processFiles() {
     return;
   }
 
-  // ââ 6. Exibir resultado âââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── 6. Exibir resultado ───────────────────────────────────────────────────
   logSection('RESUMO FINAL');
   log(`DANFEs atualizadas: ${matchCount}`
     + (noMatchCount   > 0 ? ` | Sem correspondencia: ${noMatchCount}` : '')
@@ -589,7 +589,7 @@ function processFiles() {
 
   document.getElementById('resultCard').style.display = 'block';
   document.getElementById('successMsg').textContent =
-    `${matchCount} nota(s) fiscal(is) atualizada(s) com dados dos produtos â ${outputCounts.xaCount} etiquetas no arquivo`;
+    `${matchCount} nota(s) fiscal(is) atualizada(s) com dados dos produtos — ${outputCounts.xaCount} etiquetas no arquivo`;
 
   const tbody = document.getElementById('resultsBody');
   tbody.innerHTML = '';
@@ -602,7 +602,7 @@ function processFiles() {
   document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
 }
 
-// âââ Remover secao de produtos existente (para evitar duplicatas) âââââââââââââ
+// ─── Remover secao de produtos existente (para evitar duplicatas) ─────────────
 // Remove tudo entre "PRODUTOS DO PEDIDO" e a linha horizontal de Y>=900
 
 function removeExistingProductSection(block) {
@@ -611,7 +611,7 @@ function removeExistingProductSection(block) {
   return block.replace(/\^FO40,6\d{2}\^A0N,\d+,\d+[\s\S]*?(?=\^FO0,(?:9\d{2}|10\d{2})\^GB800)/g, '');
 }
 
-// âââ Download âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Download ─────────────────────────────────────────────────────────────────
 
 function downloadResult() {
   if (!resultContent) return;
