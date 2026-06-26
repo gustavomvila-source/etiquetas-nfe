@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Domus - Inserir Produtos na NFe Simplificada</title>
+<meta name="description" content="Ferramenta para inserir dados de produtos na NFe simplificada das etiquetas ZPL do Mercado Livre">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏷️</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+.header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 24px 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+.header h1 { font-size: 22px; font-weight: 600; }
+.header p { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+.container { max-width: 880px; margin: 32px auto; padding: 0 20px; }
+.card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card h2 .step { background: #1a1a2e; color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 600px) { .upload-row { grid-template-columns: 1fr; } }
+.upload-zone { border: 2px dashed #d0d5dd; border-radius: 10px; padding: 28px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+.upload-zone:hover { border-color: #1a1a2e; background: #f8f9fb; }
+.upload-zone.has-file { border-color: #22c55e; background: #f0fdf4; }
+.upload-zone.dragover { border-color: #3b82f6; background: #eff6ff; transform: scale(1.01); }
+.upload-zone input { display: none; }
+.upload-zone .icon { font-size: 32px; margin-bottom: 8px; }
+.upload-zone .label { font-size: 14px; font-weight: 600; color: #344054; }
+.upload-zone .hint { font-size: 12px; color: #98a2b3; margin-top: 4px; }
+.upload-zone .filename { font-size: 13px; color: #22c55e; font-weight: 600; margin-top: 8px; word-break: break-all; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 28px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: #1a1a2e; color: white; width: 100%; }
+.btn-primary:hover:not(:disabled) { background: #16213e; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,26,46,0.3); }
+.btn-download { background: #22c55e; color: white; width: 100%; }
+.btn-download:hover { background: #16a34a; transform: translateY(-1px); }
+.log { background: #f8f9fb; border-radius: 8px; padding: 16px; margin-top: 16px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; line-height: 1.7; max-height: 380px; overflow-y: auto; display: none; }
+.log .ok { color: #22c55e; }
+.log .warn { color: #f59e0b; }
+.log .err { color: #ef4444; }
+.log .info { color: #6b7280; }
+.log .section { color: #1a1a2e; font-weight: 700; border-top: 1px solid #e5e7eb; margin-top: 6px; padding-top: 6px; }
+.results-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.results-table th { background: #f0f2f5; padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 2px solid #e5e7eb; }
+.results-table td { padding: 8px 10px; border-bottom: 1px solid #f0f2f5; }
+.results-table tr:hover td { background: #f8f9fb; }
+#resultCard { display: none; }
+.success-banner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; color: #166534; }
+.footer { text-align: center; padding: 20px; font-size: 12px; color: #98a2b3; }
+</style>
+</head>
+<body>
+<div class="header">
+<h1>Inserir Produtos na NFe Simplificada</h1>
+<p>Cruza dados do Excel com as etiquetas ZPL e gera arquivo pronto para impressao</p>
+</div>
+<div class="container">
+<div class="card">
+<h2><span class="step">1</span> Envie os arquivos</h2>
+<div class="upload-row">
+<div class="upload-zone" id="zplZone" onclick="document.getElementById('zplInput').click()">
+<input type="file" id="zplInput" accept=".txt,.zpl">
+<div class="icon">🏷️</div>
+<div class="label">Etiqueta de Envio</div>
+<div class="hint">Arquivo .txt ou .zpl com as etiquetas ZPL</div>
+<div class="filename" id="zplName"></div>
+</div>
+<div class="upload-zone" id="xlsxZone" onclick="document.getElementById('xlsxInput').click()">
+<input type="file" id="xlsxInput" accept=".xlsx,.xls">
+<div class="icon">📊</div>
+<div class="label">Planilha de Vendas</div>
+<div class="hint">Arquivo .xlsx exportado do Mercado Livre</div>
+<div class="filename" id="xlsxName"></div>
+</div>
+</div>
+</div>
+<div class="card">
+<h2><span class="step">2</span> Processar</h2>
+<button class="btn btn-primary" id="processBtn" disabled onclick="processFiles()">
+Cruzar Dados e Gerar Etiquetas
+</button>
+<div class="log" id="log"></div>
+</div>
+<div class="card" id="resultCard">
+<h2><span class="step">3</span> Resultado</h2>
+<div class="success-banner">✅ <span id="successMsg"></span></div>
+<table class="results-table" id="resultsTable">
+<thead><tr><th>NF</th><th>Destinatario</th><th>SKU</th><th>Qtd</th><th>Descricao</th></tr></thead>
+<tbody id="resultsBody"></tbody>
+</table>
+<br>
+<button class="btn btn-download" id="downloadBtn" onclick="downloadResult()">
+⬇ Baixar Arquivo para Impressao
+</button>
+</div>
+</div>
+<div class="footer">Domus Ecommerce — Ferramenta de Etiquetas + NFe v2</div>
+<script>
+let zplContent = null;
+let xlsxData = null;
+let resultContent = null;
+let resultFilename = '';
+['zplZone', 'xlsxZone'].forEach(id => {
+  const zone = document.getElementById(id);
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (id === 'zplZone') handleZplFile(file);
+    else handleXlsxFile(file);
+  });
+});
+document.getElementById('zplInput').addEventListener('change', e => handleZplFile(e.target.files[0]));
+document.getElementById('xlsxInput').addEventListener('change', e => handleXlsxFile(e.target.files[0]));
+function handleZplFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    zplContent = e.target.result;
+    document.getElementById('zplName').textContent = '✓ ' + file.name;
+    document.getElementById('zplZone').classList.add('has-file');
+    checkReady();
+  };
+  reader.readAsText(file);
+}
+function handleXlsxFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      xlsxData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      document.getElementById('xlsxName').textContent = '✓ ' + file.name;
+      document.getElementById('xlsxZone').classList.add('has-file');
+      checkReady();
+    } catch (err) {
+      alert('Erro ao ler o arquivo Excel: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function checkReady() {
+  document.getElementById('processBtn').disabled = !(zplContent && xlsxData);
+}
+function log(msg, cls = '') {
+  const el = document.getElementById('log');
+  el.style.display = 'block';
+  el.innerHTML += `<div class="${cls}">${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+function logSection(title) {
+  const el = document.getElementById('log');
+  el.style.display = 'block';
+  el.innerHTML += `<div class="section">— ${title} —</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+function isShippingLabel(block) {
+  return block.includes('Pack ID:') || block.includes('Venda:');
+}
+function isDanfe(block) {
+  return block.includes('DANFE SIMPLIFICADO');
+}
+function extractOrderId(block) {
+  const match = block.match(/\^FD(?:Pack ID|Venda):\s*(\d+)\^FS[\s\S]{0,300}?\^FD(\d{8,})\^FS/);
+  if (!match) return null;
+  return match[1] + match[2];
+}
+function extractNfFromShippingLabel(block) {
+  const match = block.match(/NF:\s*([\d.,]+)/);
+  if (!match) return null;
+  return match[1].replace(/[^\d]/g, '');
+}
+function extractNfFromDanfe(block) {
+  const chaveMatch = block.match(/\^FD(\d{44})\^FS/);
+  if (chaveMatch) {
+    const chave = chaveMatch[1];
+    const nf = chave.slice(25, 34).replace(/^0+/, '');
+    return { nf, source: 'CHAVE_ACESSO' };
+  }
+  const textMatch = block.match(/N(?:_c3_ba|ú|u)mero\s+([\d.,]+)\/Serie\s*(\d+)/i);
+  if (textMatch) {
+    return { nf: textMatch[1].replace(/[^\d]/g, ''), source: 'TEXTO_DANFE' };
+  }
+  return null;
+}
+function findHeaderRow(data) {
+  for (let i = 0; i < Math.min(20, data.length); i++) {
+    const row = data[i];
+    if (row.some(cell => String(cell).includes('N.º de venda') || String(cell).includes('N.° de venda') || String(cell).toLowerCase().includes('n. de venda'))) {
+      return i;
+    }
+  }
+  for (let i = 0; i < Math.min(20, data.length); i++) {
+    if (data[i].some(cell => String(cell).toUpperCase() === 'SKU')) return i;
+  }
+  return -1;
+}
+function findColumnIndex(headerRow, ...keywords) {
+  for (let i = 0; i < headerRow.length; i++) {
+    const val = String(headerRow[i]).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    for (const kw of keywords) {
+      if (val.includes(kw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))) return i;
+    }
+  }
+  return -1;
+}
+function encodeZplHex(text) {
+  let result = '';
+  const encoder = new TextEncoder();
+  for (const ch of text) {
+    const code = ch.codePointAt(0);
+    if (code > 127) {
+      const bytes = encoder.encode(ch);
+      for (const b of bytes) result += '_' + b.toString(16).toUpperCase().padStart(2, '0');
+    } else {
+      result += ch;
+    }
+  }
+  return result;
+}
+function truncate(str, max = 50) {
+  if (!str) return '';
+  return str.length <= max ? str : str.substring(0, max - 3) + '...';
+}
+function countXaPairs(text) {
+  const xaCount = (text.match(/\^XA/g) || []).length;
+  const xzCount = (text.match(/\^XZ/g) || []).length;
+  return { xaCount, xzCount };
+}
+function processFiles() {
+  const logEl = document.getElementById('log');
+  logEl.innerHTML = '';
+  logEl.style.display = 'block';
+  document.getElementById('resultCard').style.display = 'none';
+  logSection('LEITURA DO EXCEL');
+  log('Lendo planilha de vendas...', 'info');
+  const headerIdx = findHeaderRow(xlsxData);
+  if (headerIdx < 0) {
+    log('ERRO: Nao foi possivel encontrar o cabecalho na planilha.', 'err');
+    return;
+  }
+  const header = xlsxData[headerIdx];
+  log(`Cabecalho encontrado na linha ${headerIdx + 1}`, 'info');
+  const colOrder = findColumnIndex(header, 'N.º de venda', 'N.° de venda', 'N. de venda', 'numero de venda');
+  const colSku   = findColumnIndex(header, 'SKU');
+  const colQty   = findColumnIndex(header, 'Unidades');
+  const colDesc  = findColumnIndex(header, 'Título do anúncio', 'Titulo do anuncio');
+  if (colOrder < 0 || colSku < 0) {
+    log('ERRO: Colunas obrigatorias nao encontradas (N. de venda, SKU).', 'err');
+    return;
+  }
+  log(`Colunas: Venda=${colOrder}, SKU=${colSku}, Qtd=${colQty}, Desc=${colDesc}`, 'info');
+  const products = {};
+  let totalProducts = 0;
+  for (let i = headerIdx + 1; i < xlsxData.length; i++) {
+    const row = xlsxData[i];
+    const orderId = String(row[colOrder] || '').trim();
+    if (!orderId || orderId === 'undefined') continue;
+    const sku = String(row[colSku] || '').trim();
+    if (!sku) continue;
+    const qty = parseInt(row[colQty]) || 1;
+    const desc = String(row[colDesc] || '').trim();
+    if (!products[orderId]) products[orderId] = [];
+    products[orderId].push({ sku, qty, desc });
+    totalProducts++;
+  }
+  log(`<span class="ok">${Object.keys(products).length} pedidos com ${totalProducts} produtos carregados do Excel</span>`);
+  logSection('ANALISE DO ZPL');
+  const inputCounts = countXaPairs(zplContent);
+  log(`Entrada: ${inputCounts.xaCount} blocos ^XA / ${inputCounts.xzCount} blocos ^XZ`, 'info');
+  const blocks = [];
+  const labelRegex = /\^XA[\s\S]*?\^XZ/g;
+  let match;
+  while ((match = labelRegex.exec(zplContent)) !== null) {
+    blocks.push(match[0]);
+  }
+  const totalShipping = blocks.filter(b => isShippingLabel(b)).length;
+  const totalDanfe    = blocks.filter(b => isDanfe(b)).length;
+  log(`Blocos totais: ${blocks.length}`, 'info');
+  log(`Etiquetas de envio: ${totalShipping}`, 'info');
+  log(`DANFEs: ${totalDanfe}`, 'info');
+  if (blocks.length !== inputCounts.xaCount) {
+    log(`AVISO: Esperados ${inputCounts.xaCount} blocos, encontrados ${blocks.length}`, 'warn');
+  }
+  logSection('MAPEAMENTO NF → PEDIDO');
+  const nfToOrder     = {};
+  const nfToRecipient = {};
+  let nfFromShipping  = 0;
+  let nfFromDanfe     = 0;
+  const unmapped      = [];
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    if (!isShippingLabel(block)) continue;
+    const orderId = extractOrderId(block);
+    let nf = extractNfFromShippingLabel(block);
+    let nfSource = 'envio';
+    if (!nf) {
+      const nextBlock = blocks[i + 1];
+      if (nextBlock && isDanfe(nextBlock)) {
+        const result = extractNfFromDanfe(nextBlock);
+        if (result) { nf = result.nf; nfSource = result.source; }
+      }
+    } else {
+      nfFromShipping++;
+    }
+    if (nf && nfSource !== 'envio') nfFromDanfe++;
+    const recipMatch = block.match(/RECEIVER ZONE[\s\S]*?\^FD([^\^]+)\^FS/);
+    if (recipMatch) {
+      const fullName = recipMatch[1].replace(/_[0-9A-Fa-f]{2}/g, '').trim();
+      const parenIdx = fullName.indexOf('(');
+      if (nf) nfToRecipient[nf] = parenIdx > 0 ? fullName.substring(0, parenIdx).trim() : fullName;
+    }
+    if (orderId && nf) {
+      nfToOrder[nf] = orderId;
+    } else {
+      unmapped.push({ index: i, orderId, nf, reason: !orderId ? 'ORDER_NOT_FOUND' : 'NF_NOT_FOUND' });
+    }
+  }
+  log(`NFs extraidas da etiqueta de envio: ${nfFromShipping}`, 'info');
+  log(`NFs extraidas por fallback do DANFE seguinte: ${nfFromDanfe}`, 'info');
+  log(`<span class="ok">Total mapeamentos NF → Pedido: ${Object.keys(nfToOrder).length}</span>`);
+  if (unmapped.length > 0) {
+    log(`<span class="warn">Blocos sem mapeamento: ${unmapped.length}</span>`);
+    for (const u of unmapped) {
+      log(`  Bloco ${u.index}: motivo=${u.reason} | orderId=${u.orderId || 'N/A'} | nf=${u.nf || 'N/A'}`, 'warn');
+    }
+  }
+  logSection('INSERCAO DE PRODUTOS');
+  const matchResults  = [];
+  let matchCount      = 0;
+  let noMatchCount    = 0;
+  let insertFailCount = 0;
+  const outputBlocks = blocks.map(block => {
+    if (!isDanfe(block)) return block;
+    const nfResult = extractNfFromDanfe(block);
+    const nfNum = nfResult ? nfResult.nf : null;
+    if (!nfNum) { log('DANFE encontrado mas NF nao identificado', 'warn'); noMatchCount++; return block; }
+    if (!nfToOrder[nfNum]) { log(`NF ${nfNum}: Pedido nao encontrado no mapeamento`, 'warn'); noMatchCount++; return block; }
+    const orderId = nfToOrder[nfNum];
+    if (!products[orderId]) { log(`NF ${nfNum} → Pedido ${orderId}: Sem produtos na planilha`, 'warn'); noMatchCount++; return block; }
+    if (block.includes('PRODUTOS DO PEDIDO')) block = removeExistingProductSection(block);
+    const prods = products[orderId];
+    let y = 620;
+    const zplLines = [];
+    zplLines.push(`^FO40,${y}^A0N,18,18^FH^FDPRODUTOS DO PEDIDO^FS`);
+    zplLines.push(`^FO40,${y - 1}^A0N,18,18^FH^FDPRODUTOS DO PEDIDO^FS`);
+    y += 28;
+    zplLines.push(`^FO40,${y}^A0N,16,16^FDSKU^FS`);
+    zplLines.push(`^FO280,${y}^A0N,16,16^FDQtd^FS`);
+    zplLines.push(`^FO320,${y}^A0N,16,16^FH^FDDescri_C3_A7_C3_A3o^FS`);
+    y += 5;
+    zplLines.push(`^FO40,${y + 15}^GB720,0,1^FS`);
+    y += 25;
+    for (const p of prods) {
+      const descEncoded = encodeZplHex(truncate(p.desc, 50));
+      zplLines.push(`^FO40,${y}^A0N,16,16^FH^FD${p.sku}^FS`);
+      zplLines.push(`^FO285,${y}^A0N,16,16^FD${p.qty}^FS`);
+      zplLines.push(`^FO320,${y}^A0N,16,16^FH^FB440,2,0,L^FD${descEncoded}^FS`);
+      y += 40;
+      matchResults.push({ nf: nfNum, recipient: nfToRecipient[nfNum] || '-', sku: p.sku, qty: p.qty, desc: truncate(p.desc, 55) });
+    }
+    const insertBlock = zplLines.join('\n');
+    matchCount++;
+    log(`<span class="ok">✓ NF ${nfNum} → ${prods.length} produto(s) inserido(s)</span>`);
+    const rulePattern = /\^FO0,\d{3,4}\^GB800,\d,\d\^FS/;
+    const ruleMatches = [...block.matchAll(new RegExp(rulePattern, 'g'))];
+    let bestRule = null;
+    for (const rm of ruleMatches) {
+      const yVal = parseInt(rm[0].match(/\^FO0,(\d+)/)[1]);
+      if (yVal >= 900 && yVal <= 1100) { bestRule = rm[0]; break; }
+    }
+    if (bestRule) {
+      return block.replace(bestRule, insertBlock + '\n' + bestRule);
+    } else {
+      insertFailCount++;
+      log(`NF ${nfNum}: Ponto de insercao nao encontrado, usando fallback`, 'warn');
+      return block.replace(/\^XZ\s*$/, insertBlock + '\n^XZ');
+    }
+  });
+  logSection('VALIDACAO');
+  resultContent = outputBlocks.join('\n');
+  const outputCounts = countXaPairs(resultContent);
+  if (outputCounts.xaCount !== inputCounts.xaCount) {
+    log(`<span class="err">ALERTA: Entrada tinha ${inputCounts.xaCount} etiquetas, saida tem ${outputCounts.xaCount}!</span>`);
+  } else {
+    log(`<span class="ok">Blocos preservados: ${outputCounts.xaCount} (igual a entrada) ✓</span>`);
+  }
+  if (matchCount === 0) { log('ERRO: Nenhuma NFe foi atualizada.', 'err'); return; }
+  logSection('RESUMO FINAL');
+  log(`DANFEs atualizadas: ${matchCount}` + (noMatchCount > 0 ? ` | Sem correspondencia: ${noMatchCount}` : '') + (insertFailCount > 0 ? ` | Insercao alternativa: ${insertFailCount}` : ''), 'ok');
+  const now = new Date();
+  const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  resultFilename = `Etiquetas_COM_PRODUTOS_${ts}.txt`;
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('successMsg').textContent = `${matchCount} nota(s) fiscal(is) atualizada(s) com dados dos produtos — ${outputCounts.xaCount} etiquetas no arquivo`;
+  const tbody = document.getElementById('resultsBody');
+  tbody.innerHTML = '';
+  for (const r of matchResults) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.nf}</td><td>${r.recipient}</td><td><b>${r.sku}</b></td><td>${r.qty}</td><td>${r.desc}</td>`;
+    tbody.appendChild(tr);
+  }
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+}
+function removeExistingProductSection(block) {
+  return block.replace(/\^FO40,6[0-9]{2}\^A0N,18,18[\s\S]*?(?=\^FO0,\d{3,4}\^GB800)/g, '');
+}
+function downloadResult() {
+  if (!resultContent) return;
+  const blob = new Blob([resultContent], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = resultFilename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
